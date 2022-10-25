@@ -21,14 +21,49 @@ package msg_matcher
 
 import (
 	"context"
+	"net/netip"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/dnsutils"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/domain"
+	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/dummy"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/elem"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/netlist"
+	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/netrange"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/miekg/dns"
-	"net/netip"
 )
+
+type TextMatcher struct {
+	dummyMatcher dummy.Matcher
+}
+
+func NewTextMatcher(dummyMatcher dummy.Matcher) *TextMatcher {
+	return &TextMatcher{dummyMatcher: dummyMatcher}
+}
+
+func (m *TextMatcher) Match(_ context.Context, qCtx *query_context.Context) (matched bool, err error) {
+	clientAddr := qCtx.ReqMeta().ClientAddr
+	if !clientAddr.IsValid() {
+		return false, nil
+	}
+	return m.dummyMatcher.Match(clientAddr)
+}
+
+type ClientRangeMatcher struct {
+	netrangeMatcher netrange.Matcher
+}
+
+func NewClientRangeMatcher(netrangeMatcher netrange.Matcher) *ClientRangeMatcher {
+	return &ClientRangeMatcher{netrangeMatcher: netrangeMatcher}
+}
+
+func (m *ClientRangeMatcher) Match(_ context.Context, qCtx *query_context.Context) (matched bool, err error) {
+	clientAddr := qCtx.ReqMeta().ClientAddr
+	if !clientAddr.IsValid() {
+		return false, nil
+	}
+	return m.netrangeMatcher.Match(clientAddr)
+}
 
 type ClientIPMatcher struct {
 	ipMatcher netlist.Matcher

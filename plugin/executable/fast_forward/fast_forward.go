@@ -25,6 +25,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/IrineSistiana/mosdns/v4/coremain"
 	"github.com/IrineSistiana/mosdns/v4/pkg/bundled_upstream"
 	"github.com/IrineSistiana/mosdns/v4/pkg/executable_seq"
@@ -32,8 +35,6 @@ import (
 	"github.com/IrineSistiana/mosdns/v4/pkg/upstream"
 	"github.com/IrineSistiana/mosdns/v4/pkg/utils"
 	"github.com/miekg/dns"
-	"strings"
-	"time"
 )
 
 const PluginType = "fast_forward"

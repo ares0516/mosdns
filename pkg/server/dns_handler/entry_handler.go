@@ -22,13 +22,14 @@ package dns_handler
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/executable_seq"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/IrineSistiana/mosdns/v4/pkg/utils"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-	"testing"
-	"time"
 )
 
 const (
@@ -109,7 +110,18 @@ func (h *EntryHandler) ServeDNS(ctx context.Context, req *dns.Msg, meta *query_c
 	if err != nil {
 		h.opts.Logger.Warn("entry returned an err", qCtx.InfoField(), zap.Error(err))
 	} else {
-		h.opts.Logger.Debug("entry returned", qCtx.InfoField())
+		// h.opts.Logger.Debug("entry returned", qCtx.InfoField())
+		for _, n := range respMsg.Answer {
+			record, isType := n.(*dns.A)
+			if isType {
+				h.opts.Logger.Debug("entry returned", qCtx.InfoField(), zap.String("A", record.A.String()))
+			}
+			record1, isType := n.(*dns.CNAME)
+			if isType {
+				h.opts.Logger.Debug("entry returned", qCtx.InfoField(), zap.String("CNAME", record1.Target))
+			}
+			// TODO: log other types
+		}
 	}
 	if err == nil && respMsg == nil {
 		h.opts.Logger.Error("entry returned an nil response", qCtx.InfoField())

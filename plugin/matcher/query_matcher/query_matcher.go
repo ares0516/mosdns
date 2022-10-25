@@ -25,9 +25,11 @@ import (
 	"github.com/IrineSistiana/mosdns/v4/coremain"
 	"github.com/IrineSistiana/mosdns/v4/pkg/executable_seq"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/domain"
+	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/dummy"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/elem"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/msg_matcher"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/netlist"
+	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/netrange"
 	"github.com/IrineSistiana/mosdns/v4/pkg/query_context"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
@@ -62,11 +64,13 @@ func init() {
 var _ coremain.MatcherPlugin = (*queryMatcher)(nil)
 
 type Args struct {
-	ClientIP []string `yaml:"client_ip"`
-	ECS      []string `yaml:"ecs"`
-	Domain   []string `yaml:"domain"`
-	QType    []int    `yaml:"qtype"`
-	QClass   []int    `yaml:"qclass"`
+	Enable      []string `yaml:"enable"`
+	ClientIP    []string `yaml:"client_ip"`
+	ECS         []string `yaml:"ecs"`
+	Domain      []string `yaml:"domain"`
+	QType       []int    `yaml:"qtype"`
+	QClass      []int    `yaml:"qclass"`
+	ClientRange []string `yaml:"client_range"`
 	// TODO: Add PTR matcher.
 }
 
@@ -89,6 +93,20 @@ func newQueryMatcher(bp *coremain.BP, args *Args) (m *queryMatcher, err error) {
 	m = new(queryMatcher)
 	m.BP = bp
 	m.args = args
+	if len(args.Enable) > 0 {
+		l, err := dummy.BatchLoadProvider(args.Enable, bp.M().GetDataManager())
+		if err != nil {
+			return nil, err
+		}
+		m.matcherGroup = append(m.matcherGroup, msg_matcher.NewTextMatcher(l))
+	}
+	if len(args.ClientRange) > 0 {
+		l, err := netrange.BatchLoadProvider(args.ClientRange, bp.M().GetDataManager())
+		if err != nil {
+			return nil, err
+		}
+		m.matcherGroup = append(m.matcherGroup, msg_matcher.NewClientRangeMatcher(l))
+	}
 	if len(args.ClientIP) > 0 {
 		l, err := netlist.BatchLoadProvider(args.ClientIP, bp.M().GetDataManager())
 		if err != nil {
