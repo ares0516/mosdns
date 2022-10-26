@@ -22,11 +22,12 @@ package hosts
 import (
 	"errors"
 	"fmt"
+	"net/netip"
+	"strings"
+
 	"github.com/IrineSistiana/mosdns/v4/pkg/dnsutils"
 	"github.com/IrineSistiana/mosdns/v4/pkg/matcher/domain"
 	"github.com/miekg/dns"
-	"net/netip"
-	"strings"
 )
 
 type Hosts struct {
@@ -41,6 +42,7 @@ func NewHosts(m domain.Matcher[*IPs]) *Hosts {
 }
 
 func (h *Hosts) Lookup(fqdn string) (ipv4, ipv6 []netip.Addr) {
+	fmt.Printf("--------------domain [%s]\n", fqdn)
 	ips, ok := h.matcher.Match(fqdn)
 	if !ok {
 		return nil, nil // no such host
